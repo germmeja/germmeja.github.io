@@ -316,46 +316,57 @@
 </div>
 
 <!--           sexto bloque  java script -->
+<script>
+  const memory = new WebAssembly.Memory({ initial: 10 }); // Example: initial size of 10 pages
+
+  const importObject = {
+    a: {
+      memory: memory // Make sure this is the WebAssembly.Memory object
+      // other imports...
+    }
+    // other namespaces...
+  };
+
+  // Fetch the WebAssembly module
+  fetch('path/to/your/module.wasm') // Replace 'path/to/your/module.wasm' with the actual path
+    .then(response => response.arrayBuffer())
+    .then(wasmBytes => {
+      // Instantiate the module
+      WebAssembly.instantiate(wasmBytes, importObject)
+        .then(results => {
+          // Use the instantiated module
+        })
+        .catch(error => {
+          console.error("Error instantiating WebAssembly:", error);
+        });
+    })
+    .catch(error => {
+      console.error("Error fetching WebAssembly module:", error);
+    });
+
+  // Fetch the WebAssembly module and instantiate it using instantiateStreaming
+  // This approach is generally preferred for streaming compilation and instantiation
+  /*
+  fetch('path/to/your/module.wasm') // Replace 'path/to/your/module.wasm' with the actual path
+    .then(response => WebAssembly.instantiateStreaming(response, importObject))
+    .then(results => {
+      // Use the instantiated module
+    })
+    .catch(error => {
+      console.error("Error instantiating streaming WebAssembly:", error);
+    });
+  */
+
+</script>
+
+
+
+  
+  
 
 <script>
 
-  
-const memory = new WebAssembly.Memory({ initial: 10 }); // Example: initial size of 10 pages
 
-const importObject = {
-  a: {
-    memory: memory // Make sure this is the WebAssembly.Memory object
-    // other imports...
-  }
-  // other namespaces...
-};
-
-WebAssembly.instantiate(wasmBytes, importObject)
-  .then(results => {
-    // Use the instantiated module
-  })
-  .catch(error => {
-    console.error(error);
-  });
-  
-  
-// Fetch the WebAssembly module and instantiate it using instantiateStreaming
-fetch('your-module.wasm') // Replace 'your-module.wasm' with the actual path to your .wasm file
-  .then(response => response.arrayBuffer()) // Get the binary data as an ArrayBuffer
-  .then(bytes => WebAssembly.instantiate(bytes, importObject))
-  .then(results => {
-    // Module instantiated successfully
-    // You can access the exports via results.instance.exports
-  })
-  .catch(error => {
-    console.error("Error instantiating WebAssembly module:", error);
-  });
-
-
-
-
-  
-  
  window.db = null;
   initSqlJs({ locateFile: file => `sql-wasm.wasm` }).then(SQL => {
     document.getElementById('dbfile').addEventListener('change', e => {
