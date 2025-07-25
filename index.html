@@ -318,7 +318,22 @@
 <!--           sexto bloque  java script -->
 
 <script>
- 
+const memory = new WebAssembly.Memory({ initial: 10, maximum: 100 }); // Adjust initial and maximum based on module requirements
+
+const importObject = {
+  // ... other imports
+  env: { // Or whatever the import namespace is for memory
+    memory: memory
+  }
+};
+
+// Then, when calling WebAssembly.instantiate or a library function that instantiates,
+// pass this importObject.
+
+
+
+
+  
  window.db = null;
   initSqlJs({ locateFile: file => `sql-wasm.wasm` }).then(SQL => {
     document.getElementById('dbfile').addEventListener('change', e => {
