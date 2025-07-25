@@ -321,7 +321,7 @@
 
   
 const memory = new WebAssembly.Memory({ initial: 10 }); // Example: initial size of 10 pages
-// ...
+
 const importObject = {
   a: {
     memory: memory // Make sure this is the WebAssembly.Memory object
@@ -330,23 +330,13 @@ const importObject = {
   // other namespaces...
 };
 
-WebAssembly.instantiate(wasmBytes, importObject)
+// Fetch the WebAssembly module and instantiate it using instantiateStreaming
+fetch('your-module.wasm') // Replace 'your-module.wasm' with the actual path to your .wasm file
+  .then(response => response.arrayBuffer()) // Get the binary data as an ArrayBuffer
+  .then(bytes => WebAssembly.instantiate(bytes, importObject))
   .then(results => {
     // Module instantiated successfully
-  })
-  .catch(error => {
-    console.error(error);
-  });
-
-// Fetch the WebAssembly module and instantiate it
-WebAssembly.instantiateStreaming(fetch('your-module.wasm'), importObject)
-  .then(result => {
-    // The result object contains the compiled module and instantiated instance
-    const module = result.module;
-    const instance = result.instance;
-
-    // You can now interact with the instance's exports
-    // instance.exports.yourFunction(...);
+    // You can access the exports via results.instance.exports
   })
   .catch(error => {
     console.error("Error instantiating WebAssembly module:", error);
