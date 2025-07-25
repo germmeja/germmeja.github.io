@@ -1,0 +1,642 @@
+<!--           primer bloque    encabezado estilos menú y carga db -->
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Paquilandia CRM™</title>
+  <script src="sql-wasm.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #fdf9f4;
+      margin: 20px;
+      color: #4a3c2a;
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+      color: #5a3f2f;
+      border-bottom: 2px dashed #d6c3aa;
+      padding-bottom: 5px;
+    }
+    .menu {
+      margin-bottom: 15px;
+    }
+    .menu button {
+      padding: 10px 15px;
+      margin-right: 5px;
+      border: none;
+      cursor: pointer;
+      background-color: #7f5b3b;
+      color: #fff;
+      border-radius: 5px;
+    }
+    .menu button:hover {
+      background-color: #a37f56;
+    }
+    button.action {
+      margin-top: 10px;
+      padding: 8px 12px;
+      background-color: #3e7d99;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button.exit {
+      background-color: #993e3e;
+    }
+    .tab {
+      display: none;
+    }
+    .tab.active {
+      display: block;
+      margin-top: 20px;
+    }
+    .section {
+      border: 1px solid #ccc;
+      padding: 15px;
+      margin-bottom: 20px;
+      background: #fffbe6;
+      border-radius: 8px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 6px;
+      margin-bottom: 8px;
+      font-size: 14px;
+      border-radius: 4px;
+      border: 1px solid #aaa;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 10px;
+      background: #fff;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px;
+    }
+    th {
+      background: #c5a580;
+    }
+  </style>
+</head>
+<body>
+
+<h1>📚 Paquilandia CRM™ — Administración Rural Inteligente</h1>
+<p>Carga la base local de <code>DBPaquilandia.db</code> para comenzar:</p>
+<input type="file" id="dbfile" accept=".db" />
+
+<div class="menu">
+  <button onclick="showTab('cultivos')">🌱 Cultivos</button>
+  <button onclick="showTab('actividades')">🧰 Actividades</button>
+  <button onclick="showTab('equipos')">🛠️ Equipos</button>
+  <button onclick="showTab('mantenimientos')">🔧 Mantenimientos</button>
+</div>
+
+<button onclick="cerrarSesion()" class="action exit">🚪 Salir</button>
+<button onclick="exportarBD()" class="action">💾 Descargar Base .db</button>
+
+
+<!--           segundo bloque cultivos -->
+
+<div id="cultivos" class="tab">
+  <h2>🌱 Cultivos — Registro detallado</h2>
+
+  <div class="section">
+    <h3>➕ Agregar nuevo cultivo</h3>
+    <label>Nombre del cultivo</label>
+    <input id="cNombre" placeholder="Ej. Café Castillo">
+    <label>Fecha de siembra</label>
+    <input id="cFecha" type="date">
+    <label>Lote / ubicación</label>
+    <input id="cLote" placeholder="Ej. Lote A1">
+    <label>Variedad</label>
+    <input id="cVariedad" placeholder="Ej. Cenicafé 1">
+    <label>Cantidad (plantas)</label>
+    <input id="cCantidad" type="number" min="0">
+    <label>Costo unitario (COP)</label>
+    <input id="cCostoU" type="number" min="0">
+    <label>Persona responsable</label>
+    <input id="cResponsable" placeholder="Ej. Eliana Mejía">
+    <label>Duración estimada (meses)</label>
+    <input id="cDuracion" type="number" min="0">
+    <label>Estado del cultivo</label>
+    <select id="cEstado">
+      <option value="Activo">Activo</option>
+      <option value="Suspendido">Suspendido</option>
+      <option value="Terminado">Terminado</option>
+    </select>
+    <label>Comentarios / observaciones</label>
+    <textarea id="cComentario" placeholder="Condiciones del terreno, clima, notas adicionales"></textarea>
+    <button onclick="insertarCultivo()">✅ Insertar Cultivo</button>
+  </div>
+
+  <div class="section">
+    <h3>✏️ Modificar / 🗑️ Eliminar por índice</h3>
+    <label>Filtrar por índice (nombre + lote + variedad)</label>
+    <select id="cFiltro" onchange="precargarCultivo()"></select>
+    <label>Nuevo comentario / trazabilidad</label>
+    <textarea id="cNuevoComentario" placeholder="Motivo del cambio o retiro"></textarea>
+    <button onclick="modificarCultivo()">✏️ Modificar Comentario</button>
+    <button onclick="eliminarCultivo()">🗑️ Marcar como retirado</button>
+  </div>
+
+  <div class="section">
+    <h3>🔍 Listar por índice</h3>
+    <label>Seleccione combinación para listar registros</label>
+    <select id="cFiltroListar" onchange="listarCultivoPorFiltro()"></select>
+    <div id="cultivoTabla"></div>
+  </div>
+</div>
+
+
+<!--           tercer bloque    actividades -->
+
+<div id="actividades" class="tab">
+  <h2>🧰 Actividades — Registro detallado de labores</h2>
+
+  <div class="section">
+    <h3>➕ Registrar nueva actividad</h3>
+    <label>Cultivo asociado</label>
+    <input id="aCultivo" placeholder="Ej. Café Cenicafé 1">
+    <label>Lote</label>
+    <input id="aLote" placeholder="Ej. Zona A1">
+    <label>Variedad</label>
+    <input id="aVariedad" placeholder="Ej. Cenicafé 1">
+    <label>Tipo de actividad</label>
+    <input id="aTipo" placeholder="Ej. Fertilización, Poda, Recolección">
+    <label>Fecha de la actividad</label>
+    <input id="aFecha" type="date">
+
+    <label>Responsable / trabajador</label>
+    <input id="aPersona" placeholder="Ej. Pedro Ríos">
+    <label>Identificación</label>
+    <input id="aID" placeholder="Cédula o NIT">
+    <label>Duración estimada (días)</label>
+    <input id="aDuracion" type="number" min="0">
+
+    <label>Cantidad de materiales usados</label>
+    <input id="aCantidad" type="number" min="0">
+    <label>Costo unitario de materiales (COP)</label>
+    <input id="aCostoU" type="number" min="0">
+    <label>Materiales específicos</label>
+    <textarea id="aMateriales" placeholder="Ej. Urea, compostaje, cal agrícola"></textarea>
+
+    <label>Comentarios u observaciones</label>
+    <textarea id="aComentario" placeholder="Observaciones adicionales, clima, rendimiento, etc."></textarea>
+    <button onclick="insertarActividad()">✅ Insertar Actividad</button>
+  </div>
+
+  <div class="section">
+    <h3>✏️ Modificar / 🗑️ Eliminar por índice</h3>
+    <label>Filtrar por índice (cultivo + lote + variedad + tipo)</label>
+    <select id="aFiltro" onchange="precargarActividad()"></select>
+    <label>Nuevo comentario / trazabilidad</label>
+    <textarea id="aNuevoComentario" placeholder="Ej. Ajuste de fecha o motivo de retiro"></textarea>
+    <button onclick="modificarActividad()">✏️ Modificar comentario</button>
+    <button onclick="eliminarActividad()">🗑️ Marcar como retirado</button>
+  </div>
+
+  <div class="section">
+    <h3>🔍 Listar por índice</h3>
+    <label>Seleccione combinación para listar registros</label>
+    <select id="aFiltroListar" onchange="listarActividadPorFiltro()"></select>
+    <div id="actividadesTabla"></div>
+  </div>
+</div>
+
+
+<!--           cuarto bloque  equipos  -->
+
+<div id="equipos" class="tab">
+  <h2>🛠️ Equipos — Registro técnico y trazabilidad comercial</h2>
+
+  <div class="section">
+    <h3>➕ Registrar nuevo equipo</h3>
+
+    <label>Nombre del equipo</label>
+    <input id="eNombre" placeholder="Ej. Guadañadora Husqvarna 143R-II">
+    <label>Modelo</label>
+    <input id="eModelo" placeholder="Ej. 143R-II">
+    <label>Serie</label>
+    <input id="eSerie" placeholder="Ej. AHB37229">
+    <label>Marca</label>
+    <input id="eMarca" placeholder="Ej. Husqvarna">
+    <label>Valor estimado (COP)</label>
+    <input id="eValor" type="number" min="0">
+    <label>Fecha de compra</label>
+    <input id="eFecha" type="date">
+    <label>Fabricante</label>
+    <input id="eFabricante" placeholder="Ej. Husqvarna Group">
+    <label>Origen</label>
+    <input id="eOrigen" placeholder="Ej. Suecia">
+    <label>Manual disponible / URL</label>
+    <input id="eManual" placeholder="Enlace o ubicación del manual">
+    
+    <label>Proveedor</label>
+    <input id="eProveedor" placeholder="Ej. Ferretería El Campo">
+    <label>Teléfono del proveedor</label>
+    <input id="eTelefono" placeholder="Ej. +57 3204567890">
+    <label>Correo del proveedor</label>
+    <input id="eCorreo" placeholder="Ej. contacto@proveedor.com">
+    <label>Ubicación / observaciones</label>
+    <textarea id="eComentario" placeholder="Dónde se guarda, frecuencia de uso, estado actual"></textarea>
+
+    <button onclick="insertarEquipo()">✅ Insertar equipo</button>
+  </div>
+
+  <div class="section">
+    <h3>✏️ Modificar / 🗑️ Eliminar por índice</h3>
+    <label>Filtrar por índice (nombre + modelo + serie)</label>
+    <select id="eFiltro" onchange="precargarEquipo()"></select>
+    <label>Nuevo comentario / trazabilidad</label>
+    <textarea id="eNuevoComentario" placeholder="Ej. Retirado, ajustado, ubicación actual"></textarea>
+    <button onclick="modificarEquipo()">✏️ Modificar comentario</button>
+    <button onclick="eliminarEquipo()">🗑️ Marcar como retirado</button>
+  </div>
+
+  <div class="section">
+    <h3>🔍 Listar por índice</h3>
+    <label>Seleccione combinación para listar registros</label>
+    <select id="eFiltroListar" onchange="listarEquipoPorFiltro()"></select>
+    <div id="equiposTabla"></div>
+  </div>
+</div>
+
+<!--           quinto bloque    mantenimiento -->
+
+
+<div id="mantenimientos" class="tab">
+  <h2>🔧 Mantenimiento de Equipos — Trazabilidad técnica</h2>
+
+  <div class="section">
+    <h3>➕ Registrar nuevo mantenimiento</h3>
+
+    <label>Nombre del equipo</label>
+    <input id="mNombre" placeholder="Ej. Guadañadora Husqvarna 143R-II">
+    <label>Modelo</label>
+    <input id="mModelo" placeholder="Ej. 143R-II">
+    <label>Serie</label>
+    <input id="mSerie" placeholder="Ej. AHB37229">
+    <label>Tipo de mantenimiento</label>
+    <input id="mTipo" placeholder="Ej. Preventivo, Correctivo, Ajuste de cuchilla">
+    <label>Fecha de mantenimiento</label>
+    <input id="mFecha" type="date">
+
+    <label>Responsable / técnico</label>
+    <input id="mResponsable" placeholder="Ej. Pedro Ríos">
+    <label>Frecuencia sugerida (días)</label>
+    <input id="mFrecuencia" type="number" min="0">
+    <label>Observaciones</label>
+    <textarea id="mComentario" placeholder="Ej. Se reemplazó bujía, se ajustó carburador, etc."></textarea>
+
+    <button onclick="insertarMtto()">✅ Insertar mantenimiento</button>
+  </div>
+
+  <div class="section">
+    <h3>✏️ Modificar / 🗑️ Eliminar por índice</h3>
+    <label>Filtrar por índice (equipo + modelo + serie + tipo)</label>
+    <select id="mFiltro" onchange="precargarMtto()"></select>
+    <label>Nuevo comentario / trazabilidad</label>
+    <textarea id="mNuevoComentario" placeholder="Motivo del ajuste o marca de retiro"></textarea>
+    <button onclick="modificarMtto()">✏️ Modificar comentario</button>
+    <button onclick="eliminarMtto()">🗑️ Marcar como retirado</button>
+  </div>
+
+  <div class="section">
+    <h3>🔍 Listar por índice</h3>
+    <label>Seleccione combinación para visualizar registros</label>
+    <select id="mFiltroListar" onchange="listarMttoPorFiltro()"></select>
+    <div id="mantenimientosTabla"></div>
+  </div>
+</div>
+
+<!--           sexto bloque  java script -->
+
+<script>
+ 
+ window.db = null;
+  initSqlJs({ locateFile: file => `sql-wasm.wasm` }).then(SQL => {
+    document.getElementById('dbfile').addEventListener('change', e => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        window.db = new SQL.Database(new Uint8Array(reader.result));
+        alert("✅ Base cargada correctamente.");  
+        cargarCultivos();
+        cargarActividades();
+        cargarEquipos();
+        cargarMantenimientos();
+      };
+      reader.readAsArrayBuffer(e.target.files[0]);
+    });
+  });
+
+  function showTab(id) {
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  
+
+  
+  function exportarBD() {
+  try {
+    if (!window.db || typeof window.db.export !== 'function') {
+      alert('dbfile',"⚠️ La base no está activa o no se puede exportar.");
+      return;
+    }
+
+    const binaryArray = window.db.export();
+    const blob = new Blob([binaryArray], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+
+    const enlace = document.createElement('a');
+    enlace.href = url;
+    enlace.download = 'DBPaquilandia_exportado.db';
+    document.body.appendChild(enlace);
+    enlace.click();
+    document.body.removeChild(enlace);
+
+    alert("✅ Base exportada correctamente.");
+  } catch (e) {
+    alert("⚠️ Error al exportar: " + e.message);
+  }
+}
+
+
+
+function cerrarSesion() {
+    try {
+      if (window.db) window.db.close();
+      window.db = null;
+      alert("🧤 Sesión cerrada. Puedes recargar la página para comenzar de nuevo.");
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+    } catch (e) {
+      alert("⚠️ No se pudo cerrar correctamente.");
+    }
+  }
+
+
+
+
+<!--           septimo bloque   java script por tabla   cultivos -->
+
+function insertarCultivo() {
+  const total = parseFloat(cCantidad.value) * parseFloat(cCostoU.value);
+  const q = `
+    INSERT INTO Cultivo_Nombre (
+      Cultivo_Nombre, Cultivo_Nombre_Fecha, Cultivo_Nombre_Lotes,
+      Cultivo_Nombre_Variedad, Cultivo_Nombre_Costo_Unitario,
+      Cultivo_Nombre_Costo_Total, Cultivo_Nombre_Cantidades,
+      Cultivo_Nombre_Persona, Cultivo_Nombre_Duracion,
+      Cultivo_Nombre_Estado, Cultivo_Nombre_Comentarios
+    ) VALUES (
+      '${cNombre.value}', '${cFecha.value}', '${cLote.value}',
+      '${cVariedad.value}', ${parseFloat(cCostoU.value)}, ${total},
+      ${parseFloat(cCantidad.value)}, '${cResponsable.value}',
+      ${parseFloat(cDuracion.value)}, '${cEstado.value}',
+      '${cComentario.value}'
+    );
+ `;
+
+  db.run(q);
+  cargarCultivos();
+  alert("✅ Cultivo agregado");
+}
+
+<!--           septimo bloque   java script por tabla   actividades -->
+
+function insertarActividad() {
+  const total = parseFloat(aCostoU.value) * parseFloat(aCantidad.value);
+  const q = `
+    INSERT INTO Cultivo_Nombre_Actividades (
+      Cultivo_Nombre, Cultivo_Nombre_Lotes, Cultivo_Nombre_Variedad,
+      Cultivo_Nombre_Actividades_Tipo, Cultivo_Nombre_Actividades_Tipo_Fecha,
+      Cultivo_Nombre_Actividades_Persona, Cultivo_Nombre_Actividades_ID,
+      Cultivo_Nombre_Actividades_Duracion, Cultivo_Nombre_Actividades_Tipo_Cantidades,
+      Cultivo_Nombre_Actividades_Tipo_Costo_Unitario, Cultivo_Nombre_Actividades_Tipo_Costo_Total,
+      Cultivo_Nombre_Actividades_Tipo_Materiales,
+      Cultivo_Nombre_Actividades_Tipo_Comentarios
+    ) VALUES (
+      '${aCultivo.value}', '${aLote.value}', '${aVariedad.value}',
+      '${aTipo.value}', '${aFecha.value}', '${aPersona.value}',
+      '${aID.value}', ${parseFloat(aDuracion.value)},
+      ${parseFloat(aCantidad.value)}, ${parseFloat(aCostoU.value)},
+      ${total}, '${aMateriales.value}', '${aComentario.value}'
+    );
+  `;
+  db.run(q);
+  cargarActividades();
+  alert("✅ Actividad registrada");
+}
+
+<!--           septimo bloque   java script por tabla   equipos -->
+
+function insertarEquipo() {
+  const q = `
+    INSERT INTO Equipos_Nombre (
+      Equipos_Nombre, Equipos_Nombre_Modelo, Equipos_Nombre_Serie,
+      Equipos_Nombre_Marca, Equipos_Nombre_Valor,
+      Equipos_Nombre_Fecha_Compra, Equipos_Nombre_Fabricante,
+      Equipos_Nombre_Origen, Equipos_Nombre_Manual,
+      Equipos_Nombre_Proveedor, Equipos_Nombre_Proveedor_Tel,
+      Equipos_Nombre_Proveedor_Correo, Equipos_Nombre_Ubicacion
+    ) VALUES (
+      '${eNombre.value}', '${eModelo.value}', '${eSerie.value}',
+      '${eMarca.value}', ${parseFloat(eValor.value)},
+      '${eFecha.value}', '${eFabricante.value}', '${eOrigen.value}',
+      '${eManual.value}', '${eProveedor.value}', '${eTelefono.value}',
+      '${eCorreo.value}', '${eComentario.value}'
+    );
+  `;
+  db.run(q);
+  cargarEquipos();
+  alert("✅ Equipo registrado");
+}
+
+<!--           septimo bloque   java script por tabla   mantenimientos -->
+
+function insertarMtto() {
+  const q = `
+    INSERT INTO Equipos_Nombre_Tipo_Mtto (
+      Equipos_Nombre, Equipos_Nombre_Modelo, Equipos_Nombre_Serie,
+      Equipos_Nombre_Tipo_Mtto, Equipos_Nombre_Tipo_Fecha,
+      Equipos_Nombre_Tipo_Responsable, Equipos_Nombre_Tipo_Frecuencia,
+      Equipos_Nombre_Tipo_Comentario
+    ) VALUES (
+      '${mNombre.value}', '${mModelo.value}', '${mSerie.value}',
+      '${mTipo.value}', '${mFecha.value}', '${mResponsable.value}',
+      ${parseFloat(mFrecuencia.value)}, '${mComentario.value}'
+    );
+  `;
+  db.run(q);
+  cargarMantenimientos();
+  alert("✅ Mantenimiento registrado");
+}
+
+
+
+<!--           octavo bloque    modificacion, eliminación y listado cultivos -->
+
+function precargarCultivo() {
+  const [nombre, lote, variedad] = cFiltro.value.split(' - ');
+  const q = `SELECT * FROM Cultivo_Nombre
+    WHERE Cultivo_Nombre='${nombre}' AND Cultivo_Nombre_Lotes='${lote}' AND Cultivo_Nombre_Variedad='${variedad}'`;
+  const res = db.exec(q);
+  if (res.length > 0) cNuevoComentario.value = res[0].values[0][10]; // comentarios
+}
+
+function modificarCultivo() {
+  const [nombre, lote, variedad] = cFiltro.value.split(' - ');
+  const q = `UPDATE Cultivo_Nombre SET Cultivo_Nombre_Comentarios='${cNuevoComentario.value}'
+    WHERE Cultivo_Nombre='${nombre}' AND Cultivo_Nombre_Lotes='${lote}' AND Cultivo_Nombre_Variedad='${variedad}'`;
+  db.run(q);
+  cargarCultivos();
+  alert("✏️ Comentario de cultivo modificado");
+}
+
+function eliminarCultivo() {
+  const [nombre, lote, variedad] = cFiltro.value.split(' - ');
+  const fecha = new Date().toLocaleDateString();
+  const q = `UPDATE Cultivo_Nombre SET Cultivo_Nombre_Comentarios='Eliminado el ${fecha}'
+    WHERE Cultivo_Nombre='${nombre}' AND Cultivo_Nombre_Lotes='${lote}' AND Cultivo_Nombre_Variedad='${variedad}'`;
+  db.run(q);
+  cargarCultivos();
+  alert("🗑️ Cultivo marcado como retirado");
+}
+
+function listarCultivoPorFiltro() {
+  const [nombre, lote, variedad] = cFiltroListar.value.split(' - ');
+  const q = `SELECT * FROM Cultivo_Nombre
+    WHERE Cultivo_Nombre='${nombre}' AND Cultivo_Nombre_Lotes='${lote}' AND Cultivo_Nombre_Variedad='${variedad}'`;
+  const res = db.exec(q);
+  let html = '<table><tr>' + res[0].columns.map(c => `<th>${c}</th>`).join('') + '</tr>';
+  html += res[0].values.map(row => '<tr>' + row.map(val => `<td>${val}</td>`).join('') + '</tr>').join('');
+  html += '</table>';
+  cultivoTabla.innerHTML = html;
+}
+
+
+<!--           octavo bloque    modificacion, eliminación y listado  actividades -->
+
+function precargarActividad() {
+  const [cultivo, lote, variedad, tipo] = aFiltro.value.split(' - ');
+  const q = `SELECT * FROM Cultivo_Nombre_Actividades
+    WHERE Cultivo_Nombre='${cultivo}' AND Cultivo_Nombre_Lotes='${lote}'
+    AND Cultivo_Nombre_Variedad='${variedad}' AND Cultivo_Nombre_Actividades_Tipo='${tipo}'`;
+  const res = db.exec(q);
+  if (res.length > 0) aNuevoComentario.value = res[0].values[0][12]; // comentarios
+}
+
+function modificarActividad() {
+  const [cultivo, lote, variedad, tipo] = aFiltro.value.split(' - ');
+  const q = `UPDATE Cultivo_Nombre_Actividades SET Cultivo_Nombre_Actividades_Tipo_Comentarios='${aNuevoComentario.value}'
+    WHERE Cultivo_Nombre='${cultivo}' AND Cultivo_Nombre_Lotes='${lote}'
+    AND Cultivo_Nombre_Variedad='${variedad}' AND Cultivo_Nombre_Actividades_Tipo='${tipo}'`;
+  db.run(q);
+  cargarActividades();
+  alert("✏️ Comentario de actividad modificado");
+}
+
+function eliminarActividad() {
+  const [cultivo, lote, variedad, tipo] = aFiltro.value.split(' - ');
+  const fecha = new Date().toLocaleDateString();
+  const q = `UPDATE Cultivo_Nombre_Actividades SET Cultivo_Nombre_Actividades_Tipo_Comentarios='Eliminado el ${fecha}'
+    WHERE Cultivo_Nombre='${cultivo}' AND Cultivo_Nombre_Lotes='${lote}'
+    AND Cultivo_Nombre_Variedad='${variedad}' AND Cultivo_Nombre_Actividades_Tipo='${tipo}'`;
+  db.run(q);
+  cargarActividades();
+  alert("🗑️ Actividad marcada como retirada");
+}
+
+function listarActividadPorFiltro() {
+  const [cultivo, lote, variedad, tipo] = aFiltroListar.value.split(' - ');
+  const q = `SELECT * FROM Cultivo_Nombre_Actividades
+    WHERE Cultivo_Nombre='${cultivo}' AND Cultivo_Nombre_Lotes='${lote}'
+    AND Cultivo_Nombre_Variedad='${variedad}' AND Cultivo_Nombre_Actividades_Tipo='${tipo}'`;
+  const res = db.exec(q);
+  let html = '<table><tr>' + res[0].columns.map(c => `<th>${c}</th>`).join('') + '</tr>';
+  html += res[0].values.map(row => '<tr>' + row.map(val => `<td>${val}</td>`).join('') + '</tr>').join('');
+  html += '</table>';
+  actividadesTabla.innerHTML = html;
+}
+
+
+<!--           octavo bloque    modificacion, eliminación y listado equipos -->
+
+function precargarEquipo() {
+  const [nombre, modelo, serie] = eFiltro.value.split(' - ');
+  const q = `SELECT * FROM Equipos_Nombre
+    WHERE Equipos_Nombre='${nombre}' AND Equipos_Nombre_Modelo='${modelo}' AND Equipos_Nombre_Serie='${serie}'`;
+  const res = db.exec(q);
+  if (res.length > 0) eNuevoComentario.value = res[0].values[0][12]; // ubicación / comentario
+}
+
+function modificarEquipo() {
+  const [nombre, modelo, serie] = eFiltro.value.split(' - ');
+  const q = `UPDATE Equipos_Nombre SET Equipos_Nombre_Ubicacion='${eNuevoComentario.value}'
+    WHERE Equipos_Nombre='${nombre}' AND Equipos_Nombre_Modelo='${modelo}' AND Equipos_Nombre_Serie='${serie}'`;
+  db.run(q);
+  cargarEquipos();
+  alert("✏️ Comentario de equipo modificado");
+}
+
+function eliminarEquipo() {
+  const [nombre, modelo, serie] = eFiltro.value.split(' - ');
+  const fecha = new Date().toLocaleDateString();
+  const q = `UPDATE Equipos_Nombre SET Equipos_Nombre_Ubicacion='Retirado el ${fecha}'
+    WHERE Equipos_Nombre='${nombre}' AND Equipos_Nombre_Modelo='${modelo}' AND Equipos_Nombre_Serie='${serie}'`;
+  db.run(q);
+  cargarEquipos();
+  alert("🗑️ Equipo marcado como retirado");
+}
+
+function listarEquipoPorFiltro() {
+  const [nombre, modelo, serie] = eFiltroListar.value.split(' - ');
+  const q = `SELECT * FROM Equipos_Nombre
+    WHERE Equipos_Nombre='${nombre}' AND Equipos_Nombre_Modelo='${modelo}' AND Equipos_Nombre_Serie='${serie}'`;
+  const res = db.exec(q);
+  let html = '<table><tr>' + res[0].columns.map(c => `<th>${c}</th>`).join('') + '</tr>';
+  html += res[0].values.map(row => '<tr>' + row.map(val => `<td>${val}</td>`).join('') + '</tr>').join('');
+  html += '</table>';
+  equiposTabla.innerHTML = html;
+}
+
+<!--           octavo bloque    modificacion, eliminación y listado mantenimientos -->
+
+function precargarMtto() {
+  const [nombre, modelo, serie, tipo] = mFiltro.value.split(' - ');
+  const q = `SELECT * FROM Equipos_Nombre_Tipo_Mtto
+    WHERE Equipos_Nombre='${nombre}' AND Equipos_Nombre_Modelo='${modelo}'
+    AND Equipos_Nombre_Serie='${serie}' AND Equipos_Nombre_Tipo_Mtto='${tipo}'`;
+  const res = db.exec(q);
+  if (res.length > 0) mNuevoComentario.value = res[0].values[0][7];
+}
+
+function modificarMtto() {
+  const [nombre, modelo, serie, tipo] = mFiltro.value.split(' - ');
+  const q = `UPDATE Equipos_Nombre_Tipo_Mtto SET Equipos_Nombre_Tipo_Comentario='${mNuevoComentario.value}'
+    WHERE Equipos_Nombre='${nombre}' AND Equipos_Nombre_Modelo='${modelo}'
+    AND Equipos_Nombre_Serie='${serie}' AND Equipos_Nombre_Tipo_Mtto='${tipo}'`;
+  db.run(q);
+  cargarMantenimientos();
+  alert("✏️ Comentario de mantenimiento modificado");
+}
+
+function eliminarMtto() {
+  const [nombre, modelo, serie, tipo] = mFiltro.value.split(' - ');
+  const fecha = new Date().toLocaleDateString();
+ 
+}
+
+</script>
+
+
+<!--           final -->
+
+
+
