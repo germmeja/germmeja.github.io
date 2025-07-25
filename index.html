@@ -330,6 +330,15 @@ const importObject = {
   // other namespaces...
 };
 
+WebAssembly.instantiate(wasmBytes, importObject)
+  .then(results => {
+    // Use the instantiated module
+  })
+  .catch(error => {
+    console.error(error);
+  });
+  
+  
 // Fetch the WebAssembly module and instantiate it using instantiateStreaming
 fetch('your-module.wasm') // Replace 'your-module.wasm' with the actual path to your .wasm file
   .then(response => response.arrayBuffer()) // Get the binary data as an ArrayBuffer
