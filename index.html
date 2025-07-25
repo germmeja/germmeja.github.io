@@ -318,6 +318,22 @@
 <!--           sexto bloque  java script -->
 
 <script>
+
+// Fetch the WebAssembly module and instantiate it
+WebAssembly.instantiateStreaming(fetch('your-module.wasm'), importObject)
+  .then(result => {
+    // The result object contains the compiled module and instantiated instance
+    const module = result.module;
+    const instance = result.instance;
+
+    // You can now interact with the instance's exports
+    // instance.exports.yourFunction(...);
+  })
+  .catch(error => {
+    console.error("Error instantiating WebAssembly module:", error);
+  });
+
+  
 const memory = new WebAssembly.Memory({ initial: 10 }); // Example: initial size of 10 pages
 // ...
 const importObject = {
