@@ -318,19 +318,23 @@
 <!--           sexto bloque  java script -->
 
 <script>
-const memory = new WebAssembly.Memory({ initial: 10, maximum: 100 }); // Adjust initial and maximum based on module requirements
-
+const memory = new WebAssembly.Memory({ initial: 10 }); // Example: initial size of 10 pages
+// ...
 const importObject = {
-  // ... other imports
-  env: { // Or whatever the import namespace is for memory
-    memory: memory
+  a: {
+    memory: memory // Make sure this is the WebAssembly.Memory object
+    // other imports...
   }
+  // other namespaces...
 };
 
-// Then, when calling WebAssembly.instantiate or a library function that instantiates,
-// pass this importObject.
-
-
+WebAssembly.instantiate(wasmBytes, importObject)
+  .then(results => {
+    // Module instantiated successfully
+  })
+  .catch(error => {
+    console.error(error);
+  });
 
 
   
