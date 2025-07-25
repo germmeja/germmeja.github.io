@@ -329,6 +329,14 @@
     // other namespaces...
   };
 
+// Then use this importObject when instantiating the module:
+WebAssembly.instantiate(wasmBytes, importObject).then(result => {
+  // ... use the instantiated module
+}).catch(error => {
+  console.error(error);
+});
+
+  
 // Now use this importObject in instantiateStreaming
 fetch(M, { credentials: "same-origin" })
   .then(function(f) {
